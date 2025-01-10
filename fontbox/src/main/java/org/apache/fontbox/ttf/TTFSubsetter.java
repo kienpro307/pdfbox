@@ -50,7 +50,7 @@ import org.apache.commons.logging.LogFactory;
 public final class TTFSubsetter
 {
     private static final Log LOG = LogFactory.getLog(TTFSubsetter.class);
-    
+
     private static final byte[] PAD_BUF = new byte[] { 0, 0, 0 };
 
     private final TrueTypeFont ttf;
@@ -74,7 +74,7 @@ public final class TTFSubsetter
 
     /**
      * Creates a subsetter for the given font.
-     * 
+     *
      * @param ttf the font to be subset
      * @param tables optional tables to keep if present
      */
@@ -100,10 +100,10 @@ public final class TTFSubsetter
     {
         this.prefix = prefix;
     }
-    
+
     /**
      * Add the given character code to the subset.
-     * 
+     *
      * @param unicode character code
      */
     public void add(int unicode)
@@ -156,24 +156,24 @@ public final class TTFSubsetter
     {
         out.writeInt(0x00010000);
         out.writeShort(nTables);
-        
+
         int mask = Integer.highestOneBit(nTables);
         int searchRange = mask * 16;
         out.writeShort(searchRange);
-        
+
         int entrySelector = log2(mask);
-    
+
         out.writeShort(entrySelector);
-        
+
         // numTables * 16 - searchRange
         int last = 16 * nTables - searchRange;
         out.writeShort(last);
-        
+
         return 0x00010000L + toUInt32(nTables, searchRange) + toUInt32(entrySelector, last);
     }
-        
+
     private long writeTableHeader(DataOutputStream out, String tag, long offset, byte[] bytes)
-            throws IOException 
+            throws IOException
     {
         long checksum = 0;
         for (int nup = 0, n = bytes.length; nup < n; nup++)
@@ -316,7 +316,7 @@ public final class TTFSubsetter
                 String charset = "ISO-8859-1";
 
                 if (platform == CmapTable.PLATFORM_WINDOWS &&
-                    encoding == CmapTable.ENCODING_WIN_UNICODE_BMP)
+                        encoding == CmapTable.ENCODING_WIN_UNICODE_BMP)
                 {
                     charset = "UTF-16BE";
                 }
@@ -329,7 +329,7 @@ public final class TTFSubsetter
                     else if (encoding == 1) // ISO 10646=
                     {
                         //not sure is this is correct??
-                        charset = "UTF16-BE";
+                        charset = "UTF-16BE";
                     }
                     else if (encoding == 2) // ISO 8859-1
                     {
@@ -479,8 +479,8 @@ public final class TTFSubsetter
 
         boolean hasNested;
         GlyphTable g = ttf.getGlyph();
-            long[] offsets = ttf.getIndexToLocation().getOffsets();
-            do
+        long[] offsets = ttf.getIndexToLocation().getOffsets();
+        do
         {
             InputStream is = ttf.getOriginalData();
             Set<Integer> glyphIdsToAdd = null;
@@ -727,7 +727,7 @@ public final class TTFSubsetter
             }
 
             if (curChar2Gid.getKey() != prevChar.getKey()+1 ||
-                curGid - lastGid != curChar2Gid.getKey() - lastChar.getKey())
+                    curGid - lastGid != curChar2Gid.getKey() - lastChar.getKey())
             {
                 if (lastGid != 0)
                 {
@@ -872,7 +872,7 @@ public final class TTFSubsetter
         HorizontalHeaderTable h = ttf.getHorizontalHeader();
         HorizontalMetricsTable hm = ttf.getHorizontalMetrics();
         InputStream is = ttf.getOriginalData();
-        
+
         // more info: https://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6hmtx.html
         int lastgid = h.getNumberOfHMetrics() - 1;
         // true if lastgid is not in the set: we'll need its width (but not its left side bearing) later
@@ -892,7 +892,7 @@ public final class TTFSubsetter
                     offset = glyphId * 4l;
                     lastOffset = copyBytes(is, bos, offset, lastOffset, 4);
                 }
-                else 
+                else
                 {
                     if (needLastGidWidth)
                     {
@@ -934,7 +934,7 @@ public final class TTFSubsetter
             throw new EOFException("Unexpected EOF exception parsing glyphId of hmtx table.");
         }
         os.write(buf, 0, count);
-        return newOffset + count; 
+        return newOffset + count;
     }
 
     /**
@@ -950,11 +950,11 @@ public final class TTFSubsetter
         {
             LOG.info("font subset is empty");
         }
-        
+
         addCompoundReferences();
 
         DataOutputStream out = new DataOutputStream(os);
-        try 
+        try
         {
             long[] newLoca = new long[glyphIds.size() + 1];
 
@@ -980,7 +980,7 @@ public final class TTFSubsetter
             {
                 tables.put("cmap", cmap);
             }
-            tables.put("glyf", glyf); 
+            tables.put("glyf", glyf);
             tables.put("head", head);
             tables.put("hhea", hhea);
             tables.put("hmtx", hmtx);
@@ -1027,7 +1027,7 @@ public final class TTFSubsetter
                 writeTableBody(out, bytes);
             }
         }
-        finally 
+        finally
         {
             out.close();
         }
@@ -1088,5 +1088,9 @@ public final class TTFSubsetter
     private int log2(int num)
     {
         return (int) Math.floor(Math.log(num) / Math.log(2));
+    }
+
+    public void addGlyphIds(Set<Integer> allGlyphIds) {
+        this.glyphIds.addAll(allGlyphIds);
     }
 }

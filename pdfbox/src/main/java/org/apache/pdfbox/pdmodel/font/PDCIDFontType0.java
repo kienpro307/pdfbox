@@ -42,7 +42,7 @@ import static org.apache.pdfbox.pdmodel.font.UniUtil.getUniNameOfCodePoint;
 
 /**
  * Type 0 CIDFont (CFF).
- * 
+ *
  * @author Ben Litchfield
  * @author John Hewson
  */
@@ -52,7 +52,7 @@ public class PDCIDFontType0 extends PDCIDFont
 
     private final CFFCIDFont cidFont;  // Top DICT that uses CIDFont operators
     private final FontBoxFont t1Font; // Top DICT that does not use CIDFont operators
-    
+
     private final Map<Integer, Float> glyphHeights = new HashMap<Integer, Float>();
     private final boolean isEmbedded;
     private final boolean isDamaged;
@@ -65,7 +65,7 @@ public class PDCIDFontType0 extends PDCIDFont
 
     /**
      * Constructor.
-     * 
+     *
      * @param fontDictionary The font dictionary according to the PDF specification.
      * @param parent The parent font.
      */
@@ -105,7 +105,7 @@ public class PDCIDFontType0 extends PDCIDFont
                 fontIsDamaged = true;
             }
         }
-        
+
         if (cffFont != null)
         {
             // embedded
@@ -127,8 +127,8 @@ public class PDCIDFontType0 extends PDCIDFont
         {
             // find font or substitute
             CIDFontMapping mapping = FontMappers.instance()
-                                                .getCIDFont(getBaseFont(), getFontDescriptor(),
-                                                            getCIDSystemInfo());
+                    .getCIDFont(getBaseFont(), getFontDescriptor(),
+                            getCIDSystemInfo());
             FontBoxFont font;
             if (mapping.isCIDFont())
             {
@@ -158,7 +158,7 @@ public class PDCIDFontType0 extends PDCIDFont
             if (mapping.isFallback())
             {
                 LOG.warn("Using fallback " + font.getName() + " for CID-keyed font " +
-                         getBaseFont());
+                        getBaseFont());
             }
             isEmbedded = false;
             isDamaged = fontIsDamaged;
@@ -166,7 +166,11 @@ public class PDCIDFontType0 extends PDCIDFont
         fontMatrixTransform = getFontMatrix().createAffineTransform();
         fontMatrixTransform.scale(1000, 1000);
     }
-    
+    public byte[] encodeGlyphId(int glyphId) {
+        throw new UnsupportedOperationException();
+    }
+
+
     @Override
     public final Matrix getFontMatrix()
     {
@@ -192,8 +196,8 @@ public class PDCIDFontType0 extends PDCIDFont
             if (numbers != null && numbers.size() == 6)
             {
                 fontMatrix = new Matrix(numbers.get(0).floatValue(), numbers.get(1).floatValue(),
-                                        numbers.get(2).floatValue(), numbers.get(3).floatValue(),
-                                        numbers.get(4).floatValue(), numbers.get(5).floatValue());
+                        numbers.get(2).floatValue(), numbers.get(3).floatValue(),
+                        numbers.get(4).floatValue(), numbers.get(5).floatValue());
             }
             else
             {
@@ -202,7 +206,7 @@ public class PDCIDFontType0 extends PDCIDFont
         }
         return fontMatrix;
     }
-    
+
     private class FF3ByteSource implements CFFParser.ByteSource
     {
         @Override
@@ -227,9 +231,9 @@ public class PDCIDFontType0 extends PDCIDFont
         if (getFontDescriptor() != null) {
             PDRectangle bbox = getFontDescriptor().getFontBoundingBox();
             if (bbox.getLowerLeftX() != 0 || bbox.getLowerLeftY() != 0 ||
-                bbox.getUpperRightX() != 0 || bbox.getUpperRightY() != 0) {
+                    bbox.getUpperRightX() != 0 || bbox.getUpperRightY() != 0) {
                 return new BoundingBox(bbox.getLowerLeftX(), bbox.getLowerLeftY(),
-                                       bbox.getUpperRightX(), bbox.getUpperRightY());
+                        bbox.getUpperRightX(), bbox.getUpperRightY());
             }
         }
         if (cidFont != null)
@@ -417,7 +421,7 @@ public class PDCIDFontType0 extends PDCIDFont
         {
             width = t1Font.getWidth(getGlyphName(code));
         }
-        
+
         Point2D p = new Point2D.Float(width, 0);
         fontMatrixTransform.transform(p, p);
         return (float)p.getX();
