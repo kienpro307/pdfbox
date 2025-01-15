@@ -22,7 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
-import org.apache.pdfbox.io.IOUtils;
+import org.apache.pdfbox.io1.IOUtils;
 
 /**
  * Exposes PDFBox version.

@@ -21,7 +21,7 @@ import java.io.IOException;
 import java.io.FileOutputStream;
 
 import java.util.List;
-import org.apache.pdfbox.io.IOUtils;
+//import org.apache.pdfbox.io.IOUtils;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdfwriter.COSWriter;
@@ -189,7 +189,7 @@ public final class PDFSplit
                     for (int i = 0; i < documents.size(); i++)
                     {
                         PDDocument doc = documents.get(i);
-                        IOUtils.closeQuietly(doc);
+                        org.apache.pdfbox.io.io1.IOUtils.closeQuietly(doc);
                     }
                 }
             }

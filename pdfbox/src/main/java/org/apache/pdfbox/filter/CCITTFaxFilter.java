@@ -23,7 +23,7 @@ import java.io.PushbackInputStream;
 
 import org.apache.pdfbox.cos.COSDictionary;
 import org.apache.pdfbox.cos.COSName;
-import org.apache.pdfbox.io.IOUtils;
+import org.apache.pdfbox.io1.IOUtils;
 
 /**
  * Decodes image data that has been encoded using either Group 3 or Group 4

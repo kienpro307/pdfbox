@@ -40,6 +40,11 @@ public class IndexToLocationTable extends TTFTable
         super(font);
     }
 
+    IndexToLocationTable()
+    {
+        super();
+    }
+
     /**
      * This will read the required data from the stream.
      * 

@@ -27,7 +27,9 @@ import java.io.InputStream;
 
 import javax.imageio.ImageIO;
 
-import org.apache.pdfbox.io.IOUtils;
+import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.io.io2.RandomAccessRead;
+import org.apache.pdfbox.io1.IOUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
@@ -75,19 +77,18 @@ public class PDVisibleSignDesigner
     /**
      * Constructor.
      *
-     * @param documentStream Original PDF document as stream
      * @param imageStream Image as a stream
      * @param page The 1-based page number for which the page size should be calculated.
      * @throws IOException
      */
-    public PDVisibleSignDesigner(InputStream documentStream, InputStream imageStream, int page)
+    public PDVisibleSignDesigner(RandomAccessRead documentSource, InputStream imageStream, int page)
             throws IOException
     {
         // set visible signature image Input stream
         readImageStream(imageStream);
 
         // calculate height and width of document page
-        calculatePageSizeFromStream(documentStream, page);
+        calculatePageSizeFromRandomAccessRead(documentSource, page);
     }
 
     /**
@@ -125,19 +126,18 @@ public class PDVisibleSignDesigner
     /**
      * Constructor.
      *
-     * @param documentStream Original PDF document as stream
      * @param image
      * @param page The 1-based page number for which the page size should be calculated.
      * @throws IOException
      */
-    public PDVisibleSignDesigner(InputStream documentStream, BufferedImage image, int page)
+    public PDVisibleSignDesigner(RandomAccessRead documentSource, BufferedImage image, int page)
             throws IOException
     {
         // set visible signature image
         setImage(image);
 
         // calculate height and width of document page
-        calculatePageSizeFromStream(documentStream, page);
+        calculatePageSizeFromRandomAccessRead(documentSource, page);
     }
 
     /**
@@ -167,24 +167,27 @@ public class PDVisibleSignDesigner
 
     private void calculatePageSizeFromFile(String filename, int page) throws IOException
     {
-        // create PD document
-        PDDocument document = PDDocument.load(new File(filename));
-
-        // calculate height and width of document page
-        calculatePageSize(document, page);
-
-        document.close();
+        PDDocument document = Loader.loadPDF(new File(filename));
+        try
+        {
+            // calculate height and width of document page
+            calculatePageSize(document, page);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    private void calculatePageSizeFromStream(InputStream documentStream, int page) throws IOException
+    private void calculatePageSizeFromRandomAccessRead(RandomAccessRead documentSource, int page)
+            throws IOException
     {
-        // create PD document
-        PDDocument document = PDDocument.load(documentStream);
-
-        // calculate height and width of document page
-        calculatePageSize(document, page);
-
-        document.close();
+        PDDocument document = Loader.loadPDF(documentSource);
+        try
+        {
+            // calculate height and width of document page
+            calculatePageSize(document, page);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**

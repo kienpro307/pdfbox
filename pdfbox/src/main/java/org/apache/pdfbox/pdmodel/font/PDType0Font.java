@@ -35,6 +35,9 @@ import org.apache.pdfbox.cos.COSArray;
 import org.apache.pdfbox.cos.COSBase;
 import org.apache.pdfbox.cos.COSDictionary;
 import org.apache.pdfbox.cos.COSName;
+import org.apache.pdfbox.io.io2.RandomAccessRead;
+import org.apache.pdfbox.io.io2.RandomAccessReadBuffer;
+import org.apache.pdfbox.io.io2.RandomAccessReadBufferedFile;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.util.Matrix;
 import org.apache.pdfbox.util.Vector;
@@ -69,7 +72,7 @@ public class PDType0Font extends PDFont implements PDVectorFont
      */
     public static PDType0Font load(PDDocument doc, File file) throws IOException
     {
-        return new PDType0Font(doc, new TTFParser().parse(file), true, true, false);
+        return load(doc, new RandomAccessReadBufferedFile(file), true, false);
     }
 
     /**
@@ -119,6 +122,24 @@ public class PDType0Font extends PDFont implements PDVectorFont
     }
 
     /**
+     * Loads a TTF to be embedded into a document as a Type 0 font.
+     *
+     * @param doc The PDF document that will hold the embedded font.
+     * @param randomAccessRead source of a TrueType font.
+     * @param embedSubset True if the font will be subset before embedding. Set this to false when creating a font for
+     * AcroForm.
+     * @param vertical whether to enable vertical substitutions.
+     * @return A Type0 font with a CIDFontType2 descendant.
+     * @throws IOException If there is an error reading the font stream.
+     */
+    public static PDType0Font load(PDDocument doc, RandomAccessRead randomAccessRead,
+                                   boolean embedSubset, boolean vertical) throws IOException
+    {
+        return new PDType0Font(doc, new TTFParser().parse(randomAccessRead), embedSubset, true,
+                vertical);
+    }
+
+    /**
      * Loads a TTF to be embedded into a document as a vertical Type 0 font.
      *
      * @param doc The PDF document that will hold the embedded font.
@@ -128,7 +149,7 @@ public class PDType0Font extends PDFont implements PDVectorFont
      */
     public static PDType0Font loadVertical(PDDocument doc, File file) throws IOException
     {
-        return new PDType0Font(doc, new TTFParser().parse(file), true, true, true);
+        return load(doc, new RandomAccessReadBufferedFile(file), true, true);
     }
 
     /**
@@ -141,7 +162,7 @@ public class PDType0Font extends PDFont implements PDVectorFont
      */
     public static PDType0Font loadVertical(PDDocument doc, InputStream input) throws IOException
     {
-        return new PDType0Font(doc, new TTFParser().parse(input), true, true, true);
+        return load(doc, new RandomAccessReadBuffer(input), true, true);
     }
 
     /**
@@ -156,7 +177,7 @@ public class PDType0Font extends PDFont implements PDVectorFont
     public static PDType0Font loadVertical(PDDocument doc, InputStream input, boolean embedSubset)
             throws IOException
     {
-        return new PDType0Font(doc, new TTFParser().parse(input), embedSubset, true, true);
+        return load(doc, new RandomAccessReadBuffer(input), embedSubset, true);
     }
 
     /**
@@ -213,14 +234,10 @@ public class PDType0Font extends PDFont implements PDVectorFont
     /**
      * Private. Creates a new PDType0Font font for embedding.
      *
-     * @param document
-     * @param ttf
-     * @param embedSubset
      * @param closeTTF whether to close the ttf parameter after embedding. Must be true when the ttf
      * parameter was created in the load() method, false when the ttf parameter was passed to the
      * load() method.
      * @param vertical whether to enable vertical substitutions.
-     * @throws IOException
      */
     private PDType0Font(PDDocument document, TrueTypeFont ttf, boolean embedSubset,
                         boolean closeTTF, boolean vertical) throws IOException
@@ -244,7 +261,7 @@ public class PDType0Font extends PDFont implements PDVectorFont
             }
             else
             {
-                // the TTF is fully loaded and it is safe to close the underlying data source
+                // the TTF is fully loaded, and it is safe to close the underlying data source
                 ttf.close();
             }
         }
@@ -520,7 +537,7 @@ public class PDType0Font extends PDFont implements PDVectorFont
             return cMapUCS2.toUnicode(cid);
         }
 
-        // PDFBOX-5324: try to get unicode from font cmap
+        // PDFBOX-5324: try to get Unicode from font cmap
         if (descendantFont instanceof PDCIDFontType2)
         {
             TrueTypeFont font = ((PDCIDFontType2) descendantFont).getTrueTypeFont();

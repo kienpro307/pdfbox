@@ -19,6 +19,8 @@ package org.apache.pdfbox.contentstream;
 
 import java.io.IOException;
 import java.io.InputStream;
+
+import org.apache.pdfbox.io.io2.RandomAccessRead;
 import org.apache.pdfbox.pdmodel.PDResources;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.util.Matrix;
@@ -58,4 +60,21 @@ public interface PDContentStream
      * @return the matrix of this stream.
      */
     Matrix getMatrix();
+
+    RandomAccessRead getContentsForRandomAccess() throws IOException;
+
+    /**
+     * Returns this stream's content, if any.
+     *
+     * The random access capabilities of the returned instance is supposed to be limited. Peek/rewind operations are
+     * limited to a small range of data and not the whole set of data. Seek operations aren't supported at all.
+     *
+     * @return A RandomAccessRead or null.
+     * @throws IOException If the content could not be read
+     */
+    RandomAccessRead getContentsForStreamParsing() throws IOException;
+//    {
+//        return getContentsForRandomAccess();
+//    }
+
 }

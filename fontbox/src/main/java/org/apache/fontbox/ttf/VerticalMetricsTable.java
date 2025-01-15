@@ -46,6 +46,11 @@ public class VerticalMetricsTable extends TTFTable
         super(font);
     }
 
+    VerticalMetricsTable()
+    {
+        super();
+    }
+
     /**
      * This will read the required data from the stream.
      * 

@@ -16,16 +16,6 @@
  */
 package org.apache.pdfbox.pdmodel.font;
 
-import java.awt.geom.AffineTransform;
-import java.awt.geom.GeneralPath;
-import java.awt.geom.Point2D;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.fontbox.EncodedFont;
@@ -39,16 +29,20 @@ import org.apache.pdfbox.cos.COSStream;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.common.PDStream;
-import org.apache.pdfbox.pdmodel.font.encoding.Encoding;
-import org.apache.pdfbox.pdmodel.font.encoding.StandardEncoding;
-import org.apache.pdfbox.pdmodel.font.encoding.Type1Encoding;
+import org.apache.pdfbox.pdmodel.font.encoding.*;
 import org.apache.pdfbox.util.Matrix;
 
+import java.awt.geom.AffineTransform;
+import java.awt.geom.GeneralPath;
+import java.awt.geom.Point2D;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.apache.pdfbox.pdmodel.font.UniUtil.getUniNameOfCodePoint;
-import org.apache.pdfbox.pdmodel.font.encoding.SymbolEncoding;
-import org.apache.pdfbox.pdmodel.font.encoding.WinAnsiEncoding;
-import org.apache.pdfbox.pdmodel.font.encoding.ZapfDingbatsEncoding;
 
 /**
  * A PostScript Type 1 Font.
@@ -113,64 +107,10 @@ public class PDType1Font extends PDSimpleFont
     private final Map <Integer,byte[]> codeToBytesMap;
 
     /**
-     * Creates a Type 1 standard 14 font for embedding.
-     *
-     * @param baseFont One of the standard 14 PostScript names
-     */
-    private PDType1Font(String baseFont)
-    {
-        super(baseFont);
-        
-        dict.setItem(COSName.SUBTYPE, COSName.TYPE1);
-        dict.setName(COSName.BASE_FONT, baseFont);
-        if ("ZapfDingbats".equals(baseFont))
-        {
-            encoding = ZapfDingbatsEncoding.INSTANCE;
-        }
-        else if ("Symbol".equals(baseFont))
-        {
-            encoding = SymbolEncoding.INSTANCE;
-        }
-        else
-        {
-            encoding = WinAnsiEncoding.INSTANCE;
-            dict.setItem(COSName.ENCODING, COSName.WIN_ANSI_ENCODING);
-        }
-
-        // standard 14 fonts may be accessed concurrently, as they are singletons
-        codeToBytesMap = new ConcurrentHashMap<Integer,byte[]>();
-
-        // todo: could load the PFB font here if we wanted to support Standard 14 embedding
-        type1font = null;
-        FontMapping<FontBoxFont> mapping = FontMappers.instance()
-                                                      .getFontBoxFont(getBaseFont(),
-                                                                      getFontDescriptor());
-        genericFont = mapping.getFont();
-        
-        if (mapping.isFallback())
-        {
-            String fontName;
-            try
-            {
-                fontName = genericFont.getName();
-            }
-            catch (IOException e)
-            {
-                fontName = "?";
-            }
-            LOG.warn("Using fallback font " + fontName + " for base font " + getBaseFont());
-        }
-        isEmbedded = false;
-        isDamaged = false;
-        fontMatrixTransform = new AffineTransform();
-    }
-
-    /**
      * Creates a new Type 1 font for embedding.
      *
      * @param doc PDF document to write to
      * @param pfbIn PFB file stream
-     * @throws IOException
      */
     public PDType1Font(PDDocument doc, InputStream pfbIn) throws IOException
     {
@@ -182,8 +122,6 @@ public class PDType1Font extends PDSimpleFont
      *
      * @param doc PDF document to write to
      * @param pfbIn PFB file stream
-     * @param encoding
-     * @throws IOException
      */
     public PDType1Font(PDDocument doc, InputStream pfbIn, Encoding encoding) throws IOException
     {
@@ -301,6 +239,53 @@ public class PDType1Font extends PDSimpleFont
         fontMatrixTransform.scale(1000, 1000);
     }
 
+    public PDType1Font(String baseFont)
+    {
+        super(baseFont);
+        codeToBytesMap = new HashMap<Integer,byte[]>();
+
+        dict.setItem(COSName.SUBTYPE, COSName.TYPE1);
+        dict.setName(COSName.BASE_FONT, baseFont);
+        if ("ZapfDingbats".equals(baseFont))
+        {
+            encoding = ZapfDingbatsEncoding.INSTANCE;
+        }
+        else if ("Symbol".equals(baseFont))
+        {
+            encoding = SymbolEncoding.INSTANCE;
+        }
+        else
+        {
+            encoding = WinAnsiEncoding.INSTANCE;
+            dict.setItem(COSName.ENCODING, COSName.WIN_ANSI_ENCODING);
+        }
+
+        // todo: could load the PFB font here if we wanted to support Standard 14 embedding
+        type1font = null;
+        FontMapping<FontBoxFont> mapping = FontMappers.instance()
+                .getFontBoxFont(getBaseFont(),
+                        getFontDescriptor());
+        genericFont = mapping.getFont();
+
+        if (mapping.isFallback())
+        {
+            String fontName;
+            try
+            {
+                fontName = genericFont.getName();
+            }
+            catch (IOException e)
+            {
+                LOG.debug("Couldn't get font name - setting to '?'", e);
+                fontName = "?";
+            }
+            LOG.warn("Using fallback font " + fontName + " for base font " + getBaseFont());
+        }
+        isEmbedded = false;
+        isDamaged = false;
+        fontMatrixTransform = new AffineTransform();
+    }
+
     /**
      * Some Type 1 fonts have an invalid Length1, which causes the binary segment of the font
      * to be truncated, see PDFBOX-2350, PDFBOX-3677.
@@ -313,7 +298,7 @@ public class PDType1Font extends PDSimpleFont
     {
         // scan backwards from the end of the first segment to find 'exec'
         int offset = Math.max(0, length1 - 4);
-        if (offset <= 0 || offset > bytes.length - 4)
+        if (offset == 0 || offset > bytes.length - 4)
         {
             offset = bytes.length - 4;
         }
@@ -342,7 +327,7 @@ public class PDType1Font extends PDSimpleFont
         int offset = startOffset;
         while (offset > 0)
         {
-            if (bytes[offset + 0] == 'e'
+            if (bytes[offset] == 'e'
                     && bytes[offset + 1] == 'x'
                     && bytes[offset + 2] == 'e'
                     && bytes[offset + 3] == 'c')
@@ -600,7 +585,7 @@ public class PDType1Font extends PDSimpleFont
             return altName;
         }
 
-        // try unicode name
+        // try Unicode name
         String unicodes = getGlyphList().toUnicode(name);
         if (unicodes != null && unicodes.length() == 1)
         {

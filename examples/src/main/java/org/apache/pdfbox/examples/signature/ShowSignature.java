@@ -44,8 +44,9 @@ import org.apache.pdfbox.cos.COSStream;
 import org.apache.pdfbox.cos.COSString;
 import org.apache.pdfbox.examples.signature.cert.CertificateVerificationException;
 import org.apache.pdfbox.examples.signature.cert.CertificateVerifier;
-import org.apache.pdfbox.io.IOUtils;
-import org.apache.pdfbox.io.RandomAccessBufferedFileInputStream;
+import org.apache.pdfbox.io1.IOUtils;
+import org.apache.pdfbox.io1.RandomAccessBufferedFileInputStream;
+import org.apache.pdfbox.io1.RandomAccessRead;
 import org.apache.pdfbox.pdfparser.PDFParser;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDDocumentCatalog;
@@ -123,7 +124,7 @@ public final class ShowSignature
             {
                 // use old-style document loading to disable leniency
                 // see also https://www.pdf-insecurity.org/
-                RandomAccessBufferedFileInputStream raFile = new RandomAccessBufferedFileInputStream(infile);
+                RandomAccessRead raFile = new RandomAccessRead(infile);
                 // If your files are not too large, you can also download the PDF into a byte array
                 // with IOUtils.toByteArray() and pass a RandomAccessBuffer() object to the
                 // PDFParser constructor.

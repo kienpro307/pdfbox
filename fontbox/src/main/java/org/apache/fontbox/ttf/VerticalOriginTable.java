@@ -51,6 +51,11 @@ public class VerticalOriginTable extends TTFTable
         super(font);
     }
 
+    VerticalOriginTable()
+    {
+        super();
+    }
+
     /**
      * This will read the required data from the stream.
      * 

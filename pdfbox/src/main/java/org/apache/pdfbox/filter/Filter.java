@@ -19,7 +19,7 @@ package org.apache.pdfbox.filter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Iterator;
+import java.util.*;
 import java.util.zip.Deflater;
 
 import javax.imageio.ImageIO;
@@ -31,6 +31,7 @@ import org.apache.pdfbox.cos.COSArray;
 import org.apache.pdfbox.cos.COSBase;
 import org.apache.pdfbox.cos.COSDictionary;
 import org.apache.pdfbox.cos.COSName;
+import org.apache.pdfbox.io.io2.*;
 
 /**
  * A filter for stream data.
@@ -82,7 +83,7 @@ public abstract class Filter
      * @throws IOException if the stream cannot be decoded
      */
     public DecodeResult decode(InputStream encoded, OutputStream decoded, COSDictionary parameters,
-            int index, DecodeOptions options) throws IOException
+                                      int index, DecodeOptions options) throws IOException
     {
         return decode(encoded, decoded, parameters, index);
     }
@@ -105,7 +106,7 @@ public abstract class Filter
     protected abstract void encode(InputStream input, OutputStream encoded,
                                    COSDictionary parameters) throws IOException;
 
-    // gets the decode params for a specific filter index, this is used to
+    // gets to decode params for a specific filter index, this is used to
     // normalise the DecodeParams entry so that it is always a dictionary
     protected COSDictionary getDecodeParams(COSDictionary dictionary, int index)
     {
@@ -146,17 +147,18 @@ public abstract class Filter
      * @return The image reader for the format.
      * @throws MissingImageReaderException if no image reader is found.
      */
-    protected static ImageReader findImageReader(String formatName, String errorCause) throws MissingImageReaderException
+    public static ImageReader findImageReader(String formatName, String errorCause)
+            throws MissingImageReaderException
     {
         Iterator<ImageReader> readers = ImageIO.getImageReadersByFormatName(formatName);
-        ImageReader reader;
         while (readers.hasNext())
         {
-            reader = readers.next();
-            if (reader != null && reader.canReadRaster())
+            ImageReader reader = readers.next();
+            if (reader.canReadRaster())
             {
                 return reader;
             }
+            reader.dispose();
         }
         throw new MissingImageReaderException("Cannot read " + formatName + " image: " + errorCause);
     }
@@ -177,4 +179,84 @@ public abstract class Filter
         }
         return Math.max(-1, Math.min(Deflater.BEST_COMPRESSION, compressionLevel));
     }
+
+    /**
+     * Decodes data, with optional DecodeOptions. Not all filters support all options, and so callers should check the
+     * options' <code>honored</code> flag to test if they were applied.
+     *
+     * @param encoded the input stream holding the encoded data
+     * @param filterList list of filters to be used for decoding
+     * @param parameters the parameters used for decoding
+     * @param options additional options for decoding
+     * @param results list of optional decoding results for each filter
+     * @return the decoded stream data
+     * @throws IOException if the stream cannot be decoded
+     * @throws IllegalArgumentException if filterList is empty
+     */
+    public static RandomAccessRead decode(InputStream encoded, List<Filter> filterList,
+                                          COSDictionary parameters, DecodeOptions options, List<DecodeResult> results)
+            throws IOException
+    {
+        int length = parameters.getInt(COSName.LENGTH,
+                RandomAccessReadBuffer.DEFAULT_CHUNK_SIZE_4KB);
+        if (filterList.isEmpty())
+        {
+            throw new IllegalArgumentException("Empty filterList");
+        }
+        if (filterList.size() > 1)
+        {
+            Set<Filter> filterSet = new HashSet<Filter>(filterList);
+            if (filterSet.size() != filterList.size())
+            {
+                List<Filter> reducedFilterList = new ArrayList<Filter>();
+                for (Filter filter : filterList)
+                {
+                    if (!reducedFilterList.contains(filter))
+                    {
+                        reducedFilterList.add(filter);
+                    }
+                }
+                // replace origin list with the reduced one
+                filterList = reducedFilterList;
+                LOG.warn("Removed duplicated filter entries");
+            }
+        }
+        InputStream input = encoded;
+        RandomAccessReadWriteBuffer randomAccessWriteBuffer = null;
+        OutputStream output = null;
+        // apply filters
+        for (int i = 0; i < filterList.size(); i++)
+        {
+            if (i > 0)
+            {
+                randomAccessWriteBuffer.seek(0);
+                input = new RandomAccessInputStream(randomAccessWriteBuffer);
+                length = (int) randomAccessWriteBuffer.length();
+            }
+            // avoid invalid values
+            length = length <= 0 ? RandomAccessReadBuffer.DEFAULT_CHUNK_SIZE_4KB : length;
+            // we don't know the size of the decoded stream, just estimate a 4 times bigger size than the encoded stream
+            // use the estimated stream size as chunk size, use the default chunk size as limit to avoid to big values
+            randomAccessWriteBuffer = new RandomAccessReadWriteBuffer(
+                    Math.min(length << 2, RandomAccessReadBuffer.DEFAULT_CHUNK_SIZE_4KB));
+            output = new RandomAccessOutputStream(randomAccessWriteBuffer);
+            try
+            {
+                DecodeResult result = filterList.get(i).decode(input, output, parameters, i,
+                        options);
+                if (results != null)
+                {
+                    results.add(result);
+                }
+            }
+            finally
+            {
+                IOUtils.closeQuietly(input);
+            }
+        }
+        assert randomAccessWriteBuffer != null;
+        randomAccessWriteBuffer.seek(0);
+        return randomAccessWriteBuffer;
+    }
+
 }

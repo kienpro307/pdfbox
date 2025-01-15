@@ -61,6 +61,11 @@ public class CmapTable extends TTFTable
         super(font);
     }
 
+    CmapTable()
+    {
+        super();
+    }
+
     /**
      * This will read the required data from the stream.
      * 

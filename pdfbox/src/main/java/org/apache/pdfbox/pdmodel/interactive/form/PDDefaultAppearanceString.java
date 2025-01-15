@@ -29,6 +29,7 @@ import org.apache.pdfbox.cos.COSName;
 import org.apache.pdfbox.cos.COSNumber;
 import org.apache.pdfbox.cos.COSString;
 import org.apache.pdfbox.pdfparser.PDFStreamParser;
+import org.apache.pdfbox.pdmodel.PDAppearanceContentStream;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.PDResources;
 import org.apache.pdfbox.pdmodel.font.PDFont;
@@ -288,15 +289,15 @@ class PDDefaultAppearanceString
     /**
      * Writes the DA string to the given content stream.
      */
-    void writeTo(PDPageContentStream contents, float zeroFontSize) throws IOException
+    void writeTo(PDAppearanceContentStream contents, float zeroFontSize) throws IOException
     {
         float fontSize = getFontSize();
-        if (fontSize == 0)
+        if (Float.compare(fontSize, 0) == 0)
         {
             fontSize = zeroFontSize;
         }
         contents.setFont(getFont(), fontSize);
-        
+
         if (getFontColor() != null)
         {
             contents.setNonStrokingColor(getFontColor());

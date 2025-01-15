@@ -236,9 +236,9 @@ public final class COSString extends COSBase
      * @throws IOException If an error occurs while visiting this object.
      */
     @Override
-    public Object accept(ICOSVisitor visitor) throws IOException
+    public void accept(ICOSVisitor visitor) throws IOException
     {
-        return visitor.visitFromString(this);
+        visitor.visitFromString(this);
     }
 
     @Override

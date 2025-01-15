@@ -63,6 +63,11 @@ public class VerticalHeaderTable extends TTFTable
         super(font);
     }
 
+    VerticalHeaderTable()
+    {
+        super();
+    }
+
     /**
      * This will read the required data from the stream.
      * 

@@ -56,6 +56,11 @@ public class GlyphTable extends TTFTable
         super(font);
     }
 
+    GlyphTable()
+    {
+        super();
+    }
+
     /**
      * This will read the required data from the stream.
      * 

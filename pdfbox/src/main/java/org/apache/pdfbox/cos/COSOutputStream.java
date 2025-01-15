@@ -23,10 +23,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
 import org.apache.pdfbox.filter.Filter;
-import org.apache.pdfbox.io.RandomAccess;
-import org.apache.pdfbox.io.RandomAccessInputStream;
-import org.apache.pdfbox.io.RandomAccessOutputStream;
-import org.apache.pdfbox.io.ScratchFile;
+import org.apache.pdfbox.io.io2.RandomAccessStreamCache;
+import org.apache.pdfbox.io.io2.RandomAccess;
+import org.apache.pdfbox.io.io2.RandomAccessInputStream;
+import org.apache.pdfbox.io.io2.RandomAccessOutputStream;
+import org.apache.pdfbox.io.io2.ScratchFile;
 
 /**
  * An OutputStream which writes to an encoded COS stream.
@@ -37,8 +38,9 @@ public final class COSOutputStream extends FilterOutputStream
 {
     private final List<Filter> filters;
     private final COSDictionary parameters;
-    private final ScratchFile scratchFile;
+    private ScratchFile scratchFile;
     private RandomAccess buffer;
+    private RandomAccessStreamCache streamCache;
 
     /**
      * Creates a new COSOutputStream writes to an encoded COS stream.
@@ -66,6 +68,26 @@ public final class COSOutputStream extends FilterOutputStream
         {
             this.buffer = scratchFile.createBuffer();
         }
+    }
+
+    /**
+     * Creates a new COSOutputStream writes to an encoded COS stream.
+     *
+     * @param filters Filters to apply.
+     * @param parameters Filter parameters.
+     * @param output Encoded stream.
+     * @param streamCache Stream cache to use.
+     *
+     * @throws IOException If there was an error creating a temporary buffer
+     */
+    COSOutputStream(List<Filter> filters, COSDictionary parameters, OutputStream output,
+                    RandomAccessStreamCache streamCache) throws IOException
+    {
+        super(output);
+        this.filters = filters;
+        this.parameters = parameters;
+        this.streamCache = streamCache;
+        buffer = filters.isEmpty() ? null : streamCache.createBuffer();
     }
 
     @Override

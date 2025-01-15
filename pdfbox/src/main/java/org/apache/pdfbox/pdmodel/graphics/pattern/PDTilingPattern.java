@@ -24,6 +24,8 @@ import org.apache.pdfbox.cos.COSBase;
 import org.apache.pdfbox.cos.COSDictionary;
 import org.apache.pdfbox.cos.COSName;
 import org.apache.pdfbox.cos.COSStream;
+import org.apache.pdfbox.io.io2.RandomAccessInputStream;
+import org.apache.pdfbox.io.io2.RandomAccessRead;
 import org.apache.pdfbox.pdmodel.PDResources;
 import org.apache.pdfbox.pdmodel.ResourceCache;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
@@ -173,10 +175,18 @@ public class PDTilingPattern extends PDAbstractPattern implements PDContentStrea
     @Override
     public InputStream getContents() throws IOException
     {
+        RandomAccessRead contentsForRandomAccess = getContentsForRandomAccess();
+        return contentsForRandomAccess != null
+                ? new RandomAccessInputStream(contentsForRandomAccess) : null;
+    }
+
+    @Override
+    public RandomAccessRead getContentsForRandomAccess() throws IOException
+    {
         COSDictionary dict = getCOSObject();
         if (dict instanceof COSStream)
         {
-            return ((COSStream) getCOSObject()).createInputStream();
+            return ((COSStream) getCOSObject()).createView();
         }
         return null;
     }
@@ -224,6 +234,11 @@ public class PDTilingPattern extends PDAbstractPattern implements PDContentStrea
             retval = new PDRectangle((COSArray) base);
         }
         return retval;
+    }
+
+    @Override
+    public RandomAccessRead getContentsForStreamParsing() throws IOException {
+        return getContentsForRandomAccess();
     }
 
     /**

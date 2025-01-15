@@ -54,6 +54,7 @@
     <module>app</module>
     <module>debugger-app</module>
     <module>examples</module>
+    <module>io</module>
   </modules>
 
   <build>
@@ -106,6 +107,7 @@
                       <fileset dir="${basedir}">
                         <include name="RELEASE-NOTES.txt" />
                         <include name="target/*-src.zip*" />
+                        <include name="io/target/*-${project.version}.jar*" />
                         <include name="fontbox/target/*-${project.version}.jar*" />
                         <include name="pdfbox/target/*-${project.version}.jar*" />
                         <include name="xmpbox/target/*-${project.version}.jar*" />
@@ -124,6 +126,7 @@
                       </fileset>
                     </checksum>
                     <checksum file="${basedir}/target/${project.version}/pdfbox-${project.version}-src.zip" algorithm="SHA-512" property="checksum" />
+                    <!--suppress UnresolvedMavenProperty -->
                     <echo file="${basedir}/target/vote.txt">
 From: ${username}@apache.org
 To: dev@pdfbox.apache.org

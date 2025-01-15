@@ -213,9 +213,9 @@ public class COSFloat extends COSNumber
      * @throws IOException If an error occurs while visiting this object.
      */
     @Override
-    public Object accept(ICOSVisitor visitor) throws IOException
+    public void accept(ICOSVisitor visitor) throws IOException
     {
-        return visitor.visitFromFloat(this);
+        visitor.visitFromFloat(this);
     }
 
     /**

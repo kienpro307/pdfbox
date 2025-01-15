@@ -40,6 +40,11 @@ public class HorizontalMetricsTable extends TTFTable
         super(font);
     }
 
+    HorizontalMetricsTable()
+    {
+        super();
+    }
+
     /**
      * This will read the required data from the stream.
      * 

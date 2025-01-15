@@ -26,6 +26,8 @@ import org.apache.pdfbox.cos.COSDictionary;
 import org.apache.pdfbox.cos.COSFloat;
 import org.apache.pdfbox.cos.COSName;
 import org.apache.pdfbox.cos.COSStream;
+import org.apache.pdfbox.io.io2.RandomAccessInputStream;
+import org.apache.pdfbox.io.io2.RandomAccessRead;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDResources;
 import org.apache.pdfbox.pdmodel.ResourceCache;
@@ -81,14 +83,16 @@ public class PDFormXObject extends PDXObject implements PDContentStream
 
     /**
      * Creates a Form XObject for reading.
+     *
      * @param stream The XObject stream
+     * @param cache the cache to be used for the resources
      */
     public PDFormXObject(COSStream stream, ResourceCache cache)
     {
         super(stream, COSName.FORM);
         this.cache = cache;
     }
-    
+
     /**
      * Creates a Form Image XObject for writing, in the given document.
      * @param document The current document
@@ -124,17 +128,17 @@ public class PDFormXObject extends PDXObject implements PDContentStream
      */
     public PDTransparencyGroupAttributes getGroup()
     {
-        if( group == null ) 
+        if( group == null )
         {
-            COSDictionary dic = (COSDictionary) getCOSObject().getDictionaryObject(COSName.GROUP);
-            if( dic != null ) 
+            COSDictionary dic = getCOSObject().getCOSDictionary(COSName.GROUP);
+            if( dic != null )
             {
                 group = new PDTransparencyGroupAttributes(dic);
             }
         }
         return group;
     }
-    
+
     public PDStream getContentStream()
     {
         return new PDStream(getCOSObject());
@@ -143,13 +147,24 @@ public class PDFormXObject extends PDXObject implements PDContentStream
     @Override
     public InputStream getContents() throws IOException
     {
-        return getCOSObject().createInputStream();
+        return new RandomAccessInputStream(getContentsForRandomAccess());
+    }
+
+    @Override
+    public RandomAccessRead getContentsForRandomAccess() throws IOException
+    {
+        return getCOSObject().createView();
+    }
+
+    @Override
+    public RandomAccessRead getContentsForStreamParsing() throws IOException {
+        return getContentsForRandomAccess();
     }
 
     /**
      * This will get the resources for this Form XObject.
      * This will return null if no resources are available.
-     * 
+     *
      * @return The resources for this Form XObject.
      */
     @Override
@@ -189,13 +204,8 @@ public class PDFormXObject extends PDXObject implements PDContentStream
     @Override
     public PDRectangle getBBox()
     {
-        PDRectangle retval = null;
-        COSArray array = (COSArray) getCOSObject().getDictionaryObject(COSName.BBOX);
-        if (array != null)
-        {
-            retval = new PDRectangle(array);
-        }
-        return retval;
+        COSArray array = getCOSObject().getCOSArray(COSName.BBOX);
+        return array != null ? new PDRectangle(array) : null;
     }
 
     /**
@@ -269,12 +279,8 @@ public class PDFormXObject extends PDXObject implements PDContentStream
      */
     public PDPropertyList getOptionalContent()
     {
-        COSBase base = getCOSObject().getDictionaryObject(COSName.OC);
-        if (base instanceof COSDictionary)
-        {
-            return PDPropertyList.create((COSDictionary) base);
-        }
-        return null;
+        COSDictionary optionalContent = getCOSObject().getCOSDictionary(COSName.OC);
+        return optionalContent != null ? PDPropertyList.create(optionalContent) : null;
     }
 
     /**

@@ -23,9 +23,15 @@ package org.apache.fontbox.ttf;
 public class OTLTable extends TTFTable
 {
     // todo: this is a stub, a full implementation is needed
-    
+    public static final String TAG = "JSTF";
+
     OTLTable(TrueTypeFont font)
     {
         super(font);
+    }
+
+    OTLTable()
+    {
+        super();
     }
 }

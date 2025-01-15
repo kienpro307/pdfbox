@@ -31,10 +31,11 @@ import java.util.Set;
 import org.apache.pdfbox.filter.DecodeOptions;
 import org.apache.pdfbox.filter.DecodeResult;
 import org.apache.pdfbox.filter.Filter;
-import org.apache.pdfbox.io.RandomAccess;
-import org.apache.pdfbox.io.RandomAccessInputStream;
-import org.apache.pdfbox.io.RandomAccessOutputStream;
-import org.apache.pdfbox.io.ScratchFile;
+import org.apache.pdfbox.io.io2.RandomAccessRead;
+import org.apache.pdfbox.io.io2.RandomAccess;
+import org.apache.pdfbox.io.io2.RandomAccessInputStream;
+import org.apache.pdfbox.io.io2.RandomAccessOutputStream;
+import org.apache.pdfbox.io.io2.ScratchFile;
 
 /**
  * An InputStream which reads from an encoded COS stream.
@@ -57,6 +58,28 @@ public final class COSInputStream extends FilterInputStream
                                  ScratchFile scratchFile) throws IOException
     {
         return create(filters, parameters, in, scratchFile, DecodeOptions.DEFAULT);
+    }
+
+    /**
+     * Creates a new COSInputStream from an encoded input stream.
+     *
+     * @param filters Filters to be applied.
+     * @param parameters Filter parameters.
+     * @param in Encoded input stream.
+     * @param options decode options for the encoded stream
+     * @return Decoded stream.
+     * @throws IOException If the stream could not be read.
+     */
+    static COSInputStream create(List<Filter> filters, COSDictionary parameters, InputStream in,
+                                 DecodeOptions options) throws IOException
+    {
+        if (filters.isEmpty())
+        {
+            return new COSInputStream(in, Collections.<DecodeResult>emptyList());
+        }
+        List<DecodeResult> results = new ArrayList<DecodeResult>(filters.size());
+        RandomAccessRead decoded = Filter.decode(in, filters, parameters, options, results);
+        return new COSInputStream(new RandomAccessInputStream(decoded), results);
     }
 
     static COSInputStream create(List<Filter> filters, COSDictionary parameters, InputStream in,

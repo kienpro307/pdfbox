@@ -34,6 +34,7 @@ import org.apache.pdfbox.cos.COSFloat;
 import org.apache.pdfbox.cos.COSName;
 import org.apache.pdfbox.cos.COSNumber;
 import org.apache.pdfbox.cos.COSStream;
+import org.apache.pdfbox.io.io2.RandomAccessRead;
 import org.apache.pdfbox.pdmodel.common.COSArrayList;
 import org.apache.pdfbox.pdmodel.common.COSObjectable;
 import org.apache.pdfbox.pdmodel.common.PDMetadata;
@@ -71,6 +72,7 @@ public class PDPage implements COSObjectable, PDContentStream
     {
         this(PDRectangle.LETTER);
     }
+
 
     /**
      * Creates a new instance of PDPage for embedding.
@@ -262,6 +264,16 @@ public class PDPage implements COSObjectable, PDContentStream
     {
         // todo: take into account user-space unit redefinition as scale?
         return new Matrix();
+    }
+
+    @Override
+    public RandomAccessRead getContentsForRandomAccess() throws IOException {
+        return null;
+    }
+
+    @Override
+    public RandomAccessRead getContentsForStreamParsing() throws IOException {
+        return null;
     }
 
     /**

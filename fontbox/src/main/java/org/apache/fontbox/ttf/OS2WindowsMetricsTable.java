@@ -230,6 +230,11 @@ public class OS2WindowsMetricsTable extends TTFTable
         super(font);
     }
 
+    OS2WindowsMetricsTable()
+    {
+        super();
+    }
+
     /**
      * @return Returns the achVendId.
      */

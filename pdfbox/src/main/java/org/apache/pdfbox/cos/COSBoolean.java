@@ -109,9 +109,9 @@ public final class COSBoolean extends COSBase
      * @throws IOException If an error occurs while visiting this object.
      */
     @Override
-    public Object accept(ICOSVisitor  visitor) throws IOException
+    public void accept(ICOSVisitor  visitor) throws IOException
     {
-        return visitor.visitFromBoolean(this);
+        visitor.visitFromBoolean(this);
     }
 
     /**

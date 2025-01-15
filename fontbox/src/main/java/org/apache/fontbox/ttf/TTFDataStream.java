@@ -25,6 +25,7 @@ import java.util.Calendar;
 import java.util.TimeZone;
 
 import org.apache.fontbox.util.Charsets;
+import org.apache.pdfbox.io.io2.RandomAccessRead;
 
 /**
  * An interface into a data stream.
@@ -33,6 +34,7 @@ import org.apache.fontbox.util.Charsets;
  */
 abstract class TTFDataStream implements Closeable
 {
+    private static final TimeZone TIMEZONE_UTC = TimeZone.getTimeZone("UTC"); // clone before using
     TTFDataStream()
     {
     }
@@ -158,7 +160,16 @@ abstract class TTFDataStream implements Closeable
      * @return An unsigned short.
      * @throws IOException If there is an error reading the data.
      */
-    public abstract int readUnsignedShort() throws IOException;
+    public int readUnsignedShort() throws IOException
+    {
+        int b1 = read();
+        int b2 = read();
+        if ((b1 | b2) < 0)
+        {
+            throw new EOFException("EOF at " + getCurrentPosition() + ", b1: " + b1 + ", b2: " + b2);
+        }
+        return (b1 << 8) + b2;
+    }
 
     /**
      * Read an unsigned byte array.
@@ -175,6 +186,18 @@ abstract class TTFDataStream implements Closeable
             array[i] = read();
         }
         return array;
+    }
+
+    /**
+     * Creates a view from current position to {@code pos + length}.
+     * It can be faster than {@code read(length)} if you only need a few bytes.
+     * {@code SubView.close()} should never close {@code TTFDataStream.this}, only itself.
+     *
+     * @return A view or null (caller can use {@link #read} instead). Please close() the result
+     */
+    public RandomAccessRead createSubView(long length)
+    {
+        return null;
     }
 
     /**
@@ -195,12 +218,15 @@ abstract class TTFDataStream implements Closeable
     }
 
     /**
-     * Read an signed short.
+     * Read a signed short.
      *
-     * @return An signed short.
+     * @return A signed short.
      * @throws IOException If there is an error reading the data.
      */
-    public abstract short readSignedShort() throws IOException;
+    public short readSignedShort() throws IOException
+    {
+        return (short) readUnsignedShort();
+    }
 
     /**
      * Read an eight byte international date.
@@ -211,7 +237,7 @@ abstract class TTFDataStream implements Closeable
     public Calendar readInternationalDate() throws IOException
     {
         long secondsSince1904 = readLong();
-        Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+        Calendar cal = Calendar.getInstance((TimeZone) TIMEZONE_UTC.clone());
         cal.set(1904, 0, 1, 0, 0, 0);
         cal.set(Calendar.MILLISECOND, 0);
         long millisFor1904 = cal.getTimeInMillis();
@@ -221,7 +247,7 @@ abstract class TTFDataStream implements Closeable
     }
 
     /**
-     * Reads a tag, an arrau of four uint8s used to identify a script, language system, feature,
+     * Reads a tag, an arrau of four units used to identify a script, language system, feature,
      * or baseline.
      */
     public String readTag() throws IOException

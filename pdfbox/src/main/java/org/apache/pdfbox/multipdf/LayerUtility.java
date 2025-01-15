@@ -298,7 +298,7 @@ public class LayerUtility
      * Imports OCProperties from source document to target document so hidden layers can still be
      * hidden after import.
      *
-     * @param sourceDoc The source PDF document that contains the /OCProperties to be copied.
+     * @param srcDoc The source PDF document that contains the /OCProperties to be copied.
      * @throws IOException If an I/O error occurs.
      */
     private void importOcProperties(PDDocument srcDoc) throws IOException
@@ -316,7 +316,7 @@ public class LayerUtility
         if (dstOCProperties == null)
         {
             dstCatalog.setOCProperties(new PDOptionalContentProperties(
-                    (COSDictionary) cloner.cloneForNewDocument(srcOCProperties)));
+                    (COSDictionary) cloner.cloneForNewDocument(srcOCProperties.getCOSObject())));
         }
         else
         {

@@ -113,15 +113,15 @@ public class PDCIDFontType2 extends PDCIDFont
                 {
                     // embedded OTF or TTF
                     OTFParser otfParser = new OTFParser(true);
-                    OpenTypeFont otf = otfParser.parse(stream.createInputStream());
+                    TrueTypeFont otf = otfParser.parse(stream.createInputStream());
                     ttfFont = otf;
 
-                    if (otf.isPostScript())
-                    {
-                        // PDFBOX-3344 contains PostScript outlines instead of TrueType
-                        fontIsDamaged = true;
-                        LOG.warn("Found CFF/OTF but expected embedded TTF font " + fd.getFontName());
-                    }
+//                    if (otf.isPostScript())
+//                    {
+//                        // PDFBOX-3344 contains PostScript outlines instead of TrueType
+//                        fontIsDamaged = true;
+//                        LOG.warn("Found CFF/OTF but expected embedded TTF font " + fd.getFontName());
+//                    }
                 }
                 catch (IOException e)
                 {

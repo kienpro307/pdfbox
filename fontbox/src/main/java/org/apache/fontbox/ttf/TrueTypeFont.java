@@ -399,6 +399,28 @@ public class TrueTypeFont implements FontBoxFont, Closeable
     }
 
     /**
+     * Read the given table headers. Package-private, used by TTFParser only.
+     *
+     * @param tag the name of the table to be read
+     * @param outHeaders consumes headers
+     *
+     * @throws IOException if there was an error reading the table.
+     */
+    void readTableHeaders(String tag, FontHeaders outHeaders) throws IOException
+    {
+        TTFTable table = tables.get(tag);
+        if (table != null)
+        {
+            // save current position
+            long currentPosition = data.getCurrentPosition();
+            data.seek(table.getOffset());
+            table.readHeaders(this, data, outHeaders);
+            // restore current position
+            data.seek(currentPosition);
+        }
+    }
+
+    /**
      //     * Read the given table headers. Package-private, used by TTFParser only.
      //     *
      //     * @param tag the name of the table to be read

@@ -67,6 +67,11 @@ public class GlyphSubstitutionTable extends TTFTable
         super(font);
     }
 
+    GlyphSubstitutionTable()
+    {
+        super();
+    }
+
     @Override
     void read(TrueTypeFont ttf, TTFDataStream data) throws IOException
     {

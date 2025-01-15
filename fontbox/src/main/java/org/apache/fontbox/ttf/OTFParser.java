@@ -17,6 +17,8 @@
 
 package org.apache.fontbox.ttf;
 
+import org.apache.pdfbox.io.io2.RandomAccessRead;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -41,7 +43,7 @@ public final class OTFParser extends TTFParser
      */
     public OTFParser(boolean isEmbedded)
     {
-        this(isEmbedded, false);
+        super(isEmbedded);
     }
 
     /**
@@ -56,22 +58,22 @@ public final class OTFParser extends TTFParser
     }
 
     @Override
-    public OpenTypeFont parse(String file) throws IOException
+    public OpenTypeFont parse(RandomAccessRead randomAccessRead) throws IOException
     {
-        return (OpenTypeFont)super.parse(file);
+        return (OpenTypeFont) super.parse(randomAccessRead);
     }
 
-    @Override
-    public OpenTypeFont parse(File file) throws IOException
-    {
-        return (OpenTypeFont)super.parse(file);
-    }
-
-    @Override
-    public OpenTypeFont parse(InputStream data) throws IOException
-    {
-        return (OpenTypeFont)super.parse(data);
-    }
+//    @Override
+//    public OpenTypeFont parse(File file) throws IOException
+//    {
+//        return (OpenTypeFont)super.parse(file);
+//    }
+//
+//    @Override
+//    public OpenTypeFont parse(InputStream data) throws IOException
+//    {
+//        return (OpenTypeFont)super.parse(data);
+//    }
 
     @Override
     OpenTypeFont parse(TTFDataStream raf) throws IOException
@@ -86,23 +88,16 @@ public final class OTFParser extends TTFParser
     }
 
     @Override
-    protected TTFTable readTable(TrueTypeFont font, String tag)
+    protected TTFTable readTable(String tag)
     {
         // todo: this is a stub, a full implementation is needed
 
-        if (tag.equals("BASE") || tag.equals("GDEF") || tag.equals("GPOS") ||
-            tag.equals("GSUB") || tag.equals("JSTF"))
-        {
-            return new OTLTable(font);
+        if (tag.equals("BASE") || tag.equals("GDEF") || tag.equals("GPOS") || tag.equals(GlyphSubstitutionTable.TAG) || tag.equals(OTLTable.TAG)) {
+            return new OTLTable();
+        } else if (tag.equals(CFFTable.TAG)) {
+            return new CFFTable();
         }
-        else if (tag.equals("CFF "))
-        {
-            return new CFFTable(font);
-        }
-        else
-        {
-            return super.readTable(font, tag);
-        }
+        return super.readTable(tag);
     }
 
     @Override

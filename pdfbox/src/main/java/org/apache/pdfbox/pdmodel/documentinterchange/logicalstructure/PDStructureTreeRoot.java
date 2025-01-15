@@ -17,14 +17,13 @@
 package org.apache.pdfbox.pdmodel.documentinterchange.logicalstructure;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.pdfbox.cos.COSArray;
-import org.apache.pdfbox.cos.COSBase;
-import org.apache.pdfbox.cos.COSDictionary;
-import org.apache.pdfbox.cos.COSName;
+import org.apache.pdfbox.cos.*;
 import org.apache.pdfbox.pdmodel.PDStructureElementNameTreeNode;
 import org.apache.pdfbox.pdmodel.common.COSDictionaryMap;
 import org.apache.pdfbox.pdmodel.common.PDNameTreeNode;
@@ -133,6 +132,68 @@ public class PDStructureTreeRoot extends PDStructureNode
     }
 
     /**
+     * Sets the ClassMap.
+     *
+     * @return the ClassMap, never null. The elements are either {@link PDAttributeObject} or lists
+     * of it.
+     */
+    public Map<String, Object> getClassMap()
+    {
+        Map<String, Object> classMap = new HashMap<String, Object>();
+        COSDictionary classMapDictionary = this.getCOSObject().getCOSDictionary(COSName.CLASS_MAP);
+        if (classMapDictionary == null)
+        {
+            return classMap;
+        }
+//        classMapDictionary.forEach((name, base) ->
+//        {
+//            if (base instanceof COSObject)
+//            {
+//                base = ((COSObject) base).getObject();
+//            }
+//            if (base instanceof COSDictionary)
+//            {
+//                classMap.put(name.getName(), PDAttributeObject.create((COSDictionary) base));
+//            }
+//            else if (base instanceof COSArray)
+//            {
+//                COSArray array = (COSArray) base;
+//                List<PDAttributeObject> list = new ArrayList<PDAttributeObject>();
+//                for (int i = 0; i < array.size(); ++i)
+//                {
+//                    COSBase base2 = array.getObject(i);
+//                    if (base2 instanceof COSDictionary)
+//                    {
+//                        list.add(PDAttributeObject.create((COSDictionary) base2));
+//                    }
+//                }
+//                classMap.put(name.getName(), list);
+//            }
+//        });
+        for (Map.Entry<COSName, COSBase> entry : classMapDictionary.entrySet()) {
+            COSName name = entry.getKey();
+            COSBase base = entry.getValue();
+            if (base instanceof COSObject) {
+                base = ((COSObject) base).getObject();
+            }
+            if (base instanceof COSDictionary) {
+                classMap.put(name.getName(), PDAttributeObject.create((COSDictionary) base));
+            } else if (base instanceof COSArray) {
+                COSArray array = (COSArray) base;
+                List<PDAttributeObject> list = new ArrayList<PDAttributeObject>();
+                for (int i = 0; i < array.size(); ++i) {
+                    COSBase base2 = array.getObject(i);
+                    if (base2 instanceof COSDictionary) {
+                        list.add(PDAttributeObject.create((COSDictionary) base2));
+                    }
+                }
+                classMap.put(name.getName(), list);
+            }
+        }
+        return classMap;
+    }
+
+    /**
      * Sets the ID tree.
      * 
      * @param idTree the ID tree
@@ -224,4 +285,29 @@ public class PDStructureTreeRoot extends PDStructureNode
         this.getCOSObject().setItem(COSName.ROLE_MAP, rmDic);
     }
 
+    /**
+     * Sets the ClassMap.
+     *
+     * @param classMap null, or a map whose elements are either {@link PDAttributeObject} or lists
+     * of it.
+     */
+    public void setClassMap(Map<String, Object> classMap)
+    {
+        if (classMap == null || classMap.isEmpty())
+        {
+            this.getCOSObject().removeItem(COSName.CLASS_MAP);
+            return;
+        }
+        COSDictionary classMapDictionary = new COSDictionary();
+        for (Map.Entry<String, Object> entry : classMap.entrySet()) {
+            String name = entry.getKey();
+            Object object = entry.getValue();
+            if (object instanceof PDAttributeObject) {
+                classMapDictionary.setItem(name, ((PDAttributeObject) object).getCOSObject());
+            } else if (object instanceof List) {
+                classMapDictionary.setItem(name, new COSArray((List<PDAttributeObject>) object));
+            }
+        }
+        this.getCOSObject().setItem(COSName.CLASS_MAP, classMapDictionary);
+    }
 }

@@ -49,6 +49,11 @@ public class PostScriptTable extends TTFTable
         super(font);
     }
 
+    PostScriptTable()
+    {
+        super();
+    }
+
     /**
      * This will read the required data from the stream.
      * 

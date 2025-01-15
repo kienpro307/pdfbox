@@ -32,4 +32,9 @@ public class DigitalSignatureTable extends TTFTable
     {
         super(font);
     }
+
+    DigitalSignatureTable()
+    {
+        super();
+    }
 }

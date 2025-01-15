@@ -53,6 +53,11 @@ public class HorizontalHeaderTable extends TTFTable
         super(font);
     }
 
+    HorizontalHeaderTable()
+    {
+        super();
+    }
+
     /**
      * This will read the required data from the stream.
      * 

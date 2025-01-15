@@ -19,6 +19,7 @@ package org.apache.pdfbox.pdmodel.interactive.form;
 import java.io.IOException;
 import java.util.List;
 
+import org.apache.pdfbox.pdmodel.PDAppearanceContentStream;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.interactive.form.PlainText.Line;
 import org.apache.pdfbox.pdmodel.interactive.form.PlainText.Paragraph;
@@ -73,7 +74,7 @@ class PlainTextFormatter
     private final boolean wrapLines;
     private final float width;
     
-    private final PDPageContentStream contents;
+    private final PDAppearanceContentStream contents;
     private final PlainText textContent;
     private final TextAlign textAlignment;
     
@@ -84,7 +85,7 @@ class PlainTextFormatter
     {
 
         // required parameters
-        private PDPageContentStream contents;
+        private final PDAppearanceContentStream contents;
 
         // optional parameters
         private AppearanceStyle appearanceStyle;
@@ -97,8 +98,8 @@ class PlainTextFormatter
         // initial offset from where to start the position of the first line
         private float horizontalOffset = 0f;
         private float verticalOffset = 0f;
-        
-        Builder(PDPageContentStream contents)
+
+        Builder(PDAppearanceContentStream contents)
         {
             this.contents = contents;
         }

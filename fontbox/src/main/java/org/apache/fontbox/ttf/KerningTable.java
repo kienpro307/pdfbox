@@ -43,6 +43,11 @@ public class KerningTable extends TTFTable
         super(font);
     }
 
+    KerningTable()
+    {
+        super();
+    }
+
     /**
      * This will read the required data from the stream.
      *

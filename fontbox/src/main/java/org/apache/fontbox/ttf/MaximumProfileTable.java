@@ -51,6 +51,11 @@ public class MaximumProfileTable extends TTFTable
         super(font);
     }
 
+    MaximumProfileTable()
+    {
+        super();
+    }
+
     /**
      * @return Returns the maxComponentDepth.
      */

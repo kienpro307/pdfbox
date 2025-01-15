@@ -38,6 +38,11 @@ public class CFFTable extends TTFTable
         super(font);
     }
 
+    CFFTable()
+    {
+        super();
+    }
+
     /**
      * This will read the required data from the stream.
      *

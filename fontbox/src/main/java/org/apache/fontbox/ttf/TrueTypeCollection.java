@@ -17,6 +17,9 @@
 
 package org.apache.fontbox.ttf;
 
+import org.apache.pdfbox.io.io2.RandomAccessRead;
+import org.apache.pdfbox.io.io2.RandomAccessReadBufferedFile;
+
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
@@ -91,6 +94,30 @@ public class TrueTypeCollection implements Closeable
             int ulDsigOffset = stream.readUnsignedShort();
         }
     }
+
+    /**
+     * Run the callback for each TT font in the collection.
+     *
+     * @param trueTypeFontProcessor the object with the callback method.
+     * @throws IOException if something went wrong when parsing any font
+     */
+    public static void processAllFontHeaders(File ttcFile, TrueTypeFontHeadersProcessor trueTypeFontProcessor) throws IOException
+    {
+        RandomAccessRead read = new RandomAccessReadBufferedFile(ttcFile);
+        TTFDataStream stream = new RandomAccessReadUnbufferedDataStream(read);
+        TrueTypeCollection ttc = new TrueTypeCollection(stream);
+        try
+        {
+            for (int i = 0; i < ttc.numFonts; i++)
+            {
+                TTFParser parser = ttc.createFontParserAtIndexAndSeek(i);
+                FontHeaders headers = parser.parseTableHeaders(new TTCDataStream(ttc.stream));
+                trueTypeFontProcessor.process(headers);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
     
     /**
      * Run the callback for each TT font in the collection.
@@ -122,6 +149,22 @@ public class TrueTypeCollection implements Closeable
         stream.seek(fontOffsets[idx]);
         return parser.parse(new TTCDataStream(stream));
     }
+    private TTFParser createFontParserAtIndexAndSeek(int idx) throws IOException
+    {
+        stream.seek(fontOffsets[idx]);
+        TTFParser parser;
+        if (stream.readTag().equals("OTTO"))
+        {
+            parser = new OTFParser(false);
+        }
+        else
+        {
+            parser = new TTFParser(false);
+        }
+        stream.seek(fontOffsets[idx]);
+        return parser;
+    }
+
 
     /**
      * Get a TT font from a collection.
@@ -143,9 +186,7 @@ public class TrueTypeCollection implements Closeable
         return null;
     }
 
-    /**
-     * Implement the callback method to call {@link TrueTypeCollection#processAllFonts(TrueTypeFontProcessor)}.
-     */
+    @FunctionalInterface
     public interface TrueTypeFontProcessor
     {
         void process(TrueTypeFont ttf) throws IOException;
@@ -155,5 +196,11 @@ public class TrueTypeCollection implements Closeable
     public void close() throws IOException
     {
         stream.close();
+    }
+
+    @FunctionalInterface
+    public interface TrueTypeFontHeadersProcessor
+    {
+        void process(FontHeaders fontHeaders);
     }
 }

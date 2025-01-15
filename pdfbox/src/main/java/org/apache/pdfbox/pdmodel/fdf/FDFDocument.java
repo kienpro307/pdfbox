@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 
 import org.apache.pdfbox.cos.COSDictionary;
 import org.apache.pdfbox.cos.COSDocument;
@@ -44,14 +45,16 @@ import org.w3c.dom.Element;
  */
 public class FDFDocument implements Closeable
 {
-    private COSDocument document;
+    private final COSDocument document;
 
     /**
      * Constructor, creates a new FDF document.
+     *
      */
     public FDFDocument()
     {
         document = new COSDocument();
+        document.getDocumentState().setParsing(false);
         document.setVersion(1.2f);
 
         // First we need a trailer
@@ -70,6 +73,7 @@ public class FDFDocument implements Closeable
     public FDFDocument(COSDocument doc)
     {
         document = doc;
+        document.getDocumentState().setParsing(false);
     }
 
     /**
@@ -145,100 +149,10 @@ public class FDFDocument implements Closeable
      *
      * @param cat The FDF catalog.
      */
-    public void setCatalog(FDFCatalog cat)
+    public final void setCatalog(FDFCatalog cat)
     {
         COSDictionary trailer = document.getTrailer();
         trailer.setItem(COSName.ROOT, cat);
-    }
-
-    /**
-     * This will load a document from a file.
-     *
-     * @param filename The name of the file to load.
-     *
-     * @return The document that was loaded.
-     *
-     * @throws IOException If there is an error reading from the stream.
-     */
-    public static FDFDocument load(String filename) throws IOException
-    {
-        FDFParser parser = new FDFParser(filename);
-        parser.parse();
-        return new FDFDocument(parser.getDocument());
-    }
-
-    /**
-     * This will load a document from a file.
-     *
-     * @param file The name of the file to load.
-     *
-     * @return The document that was loaded.
-     *
-     * @throws IOException If there is an error reading from the stream.
-     */
-    public static FDFDocument load(File file) throws IOException
-    {
-        FDFParser parser = new FDFParser(file);
-        parser.parse();
-        return new FDFDocument(parser.getDocument());
-    }
-
-    /**
-     * This will load a document from an input stream.
-     *
-     * @param input The stream that contains the document.
-     *
-     * @return The document that was loaded.
-     *
-     * @throws IOException If there is an error reading from the stream.
-     */
-    public static FDFDocument load(InputStream input) throws IOException
-    {
-        FDFParser parser = new FDFParser(input);
-        parser.parse();
-        return new FDFDocument(parser.getDocument());
-    }
-
-    /**
-     * This will load a document from a file.
-     *
-     * @param filename The name of the file to load.
-     *
-     * @return The document that was loaded.
-     *
-     * @throws IOException If there is an error reading from the stream.
-     */
-    public static FDFDocument loadXFDF(String filename) throws IOException
-    {
-        return loadXFDF(new BufferedInputStream(new FileInputStream(filename)));
-    }
-
-    /**
-     * This will load a document from a file.
-     *
-     * @param file The name of the file to load.
-     *
-     * @return The document that was loaded.
-     *
-     * @throws IOException If there is an error reading from the stream.
-     */
-    public static FDFDocument loadXFDF(File file) throws IOException
-    {
-        return loadXFDF(new BufferedInputStream(new FileInputStream(file)));
-    }
-
-    /**
-     * This will load a document from an input stream.
-     *
-     * @param input The stream that contains the document.
-     *
-     * @return The document that was loaded.
-     *
-     * @throws IOException If there is an error reading from the stream.
-     */
-    public static FDFDocument loadXFDF(InputStream input) throws IOException
-    {
-        return new FDFDocument(org.apache.pdfbox.util.XMLUtil.parse(input));
     }
 
     /**
@@ -251,8 +165,12 @@ public class FDFDocument implements Closeable
     public void save(File fileName) throws IOException
     {
         FileOutputStream fos = new FileOutputStream(fileName);
-        save(fos);
-        fos.close();
+        try
+        {
+            save(fos);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -276,20 +194,8 @@ public class FDFDocument implements Closeable
      */
     public void save(OutputStream output) throws IOException
     {
-        COSWriter writer = null;
-        try
-        {
-            writer = new COSWriter(output);
-            writer.write(this);
-            writer.close();
-        }
-        finally
-        {
-            if (writer != null)
-            {
-                writer.close();
-            }
-        }
+        COSWriter writer = new COSWriter(output);
+        writer.write(this);
     }
 
     /**
@@ -302,9 +208,13 @@ public class FDFDocument implements Closeable
     public void saveXFDF(File fileName) throws IOException
     {
         BufferedWriter writer = new BufferedWriter(
-                new OutputStreamWriter(new FileOutputStream(fileName), "UTF-8"));
-        saveXFDF(writer);
-        writer.close();
+                new OutputStreamWriter(new FileOutputStream(fileName), StandardCharsets.UTF_8));
+        try
+        {
+            saveXFDF(writer);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -346,6 +256,7 @@ public class FDFDocument implements Closeable
      *
      * @throws IOException If there is an error releasing resources.
      */
+    @Override
     public void close() throws IOException
     {
         document.close();
