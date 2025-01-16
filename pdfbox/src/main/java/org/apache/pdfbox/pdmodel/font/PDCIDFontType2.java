@@ -37,7 +37,7 @@ import org.apache.pdfbox.util.Matrix;
 
 /**
  * Type 2 CIDFont (TrueType).
- * 
+ *
  * @author Ben Litchfield
  */
 public class PDCIDFontType2 extends PDCIDFont
@@ -55,7 +55,7 @@ public class PDCIDFontType2 extends PDCIDFont
 
     /**
      * Constructor.
-     * 
+     *
      * @param fontDictionary The font dictionary according to the PDF specification.
      * @param parent The parent font.
      * @throws IOException
@@ -64,10 +64,14 @@ public class PDCIDFontType2 extends PDCIDFont
     {
         this(fontDictionary, parent, null);
     }
-    
+
+    public byte[] encodeGlyphId(int glyphId) {
+        return new byte[]{(byte)(glyphId >> 8 & 255), (byte)(glyphId & 255)};
+    }
+
     /**
      * Constructor.
-     * 
+     *
      * @param fontDictionary The font dictionary according to the PDF specification.
      * @param parent The parent font.
      * @param trueTypeFont The true type font used to create the parent font
@@ -111,7 +115,7 @@ public class PDCIDFontType2 extends PDCIDFont
                     OTFParser otfParser = new OTFParser(true);
                     OpenTypeFont otf = otfParser.parse(stream.createInputStream());
                     ttfFont = otf;
-    
+
                     if (otf.isPostScript())
                     {
                         // PDFBOX-3344 contains PostScript outlines instead of TrueType
@@ -127,7 +131,7 @@ public class PDCIDFontType2 extends PDCIDFont
             }
             isEmbedded = ttfFont != null;
             isDamaged = fontIsDamaged;
-    
+
             if (ttfFont == null)
             {
                 ttfFont = findFontOrSubstitute();
@@ -187,13 +191,13 @@ public class PDCIDFontType2 extends PDCIDFont
         {
             PDRectangle bbox = getFontDescriptor().getFontBoundingBox();
             if (bbox != null &&
-                    (Float.compare(bbox.getLowerLeftX(), 0) != 0 || 
-                     Float.compare(bbox.getLowerLeftY(), 0) != 0 ||
-                     Float.compare(bbox.getUpperRightX(), 0) != 0 ||
-                     Float.compare(bbox.getUpperRightY(), 0) != 0))
+                    (Float.compare(bbox.getLowerLeftX(), 0) != 0 ||
+                            Float.compare(bbox.getLowerLeftY(), 0) != 0 ||
+                            Float.compare(bbox.getUpperRightX(), 0) != 0 ||
+                            Float.compare(bbox.getUpperRightY(), 0) != 0))
             {
                 return new BoundingBox(bbox.getLowerLeftX(), bbox.getLowerLeftY(),
-                                       bbox.getUpperRightX(), bbox.getUpperRightY());
+                        bbox.getUpperRightX(), bbox.getUpperRightY());
             }
         }
         return ttf.getFontBBox();
@@ -268,7 +272,7 @@ public class PDCIDFontType2 extends PDCIDFont
                 {
                     LOG.warn("Trying to map multi-byte character using 'cmap', result will be poor");
                 }
-                
+
                 // a non-embedded font always has a cmap (otherwise FontMapper won't load it)
                 return cmap.getGlyphId(unicode.codePointAt(0));
             }

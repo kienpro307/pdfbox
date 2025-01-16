@@ -367,7 +367,7 @@ public abstract class PDCIDFont implements COSObjectable, PDFontLike, PDVectorFo
         }
         return null;
     }
-    
+
     /**
      * Returns the CID for the given character code. If not found then CID 0 is returned.
      *
@@ -384,6 +384,8 @@ public abstract class PDCIDFont implements COSObjectable, PDFontLike, PDVectorFo
      * @throws java.io.IOException
      */
     public abstract int codeToGID(int code) throws IOException;
+
+    public abstract byte[] encodeGlyphId(int var1);
 
     /**
      * Encodes the given Unicode code point for use in a PDF content stream.

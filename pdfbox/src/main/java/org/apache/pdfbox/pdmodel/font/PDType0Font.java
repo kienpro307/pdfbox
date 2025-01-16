@@ -29,6 +29,7 @@ import org.apache.fontbox.cmap.CMap;
 import org.apache.fontbox.ttf.CmapLookup;
 import org.apache.fontbox.ttf.TTFParser;
 import org.apache.fontbox.ttf.TrueTypeFont;
+import org.apache.fontbox.ttf.model.GsubData;
 import org.apache.fontbox.util.BoundingBox;
 import org.apache.pdfbox.cos.COSArray;
 import org.apache.pdfbox.cos.COSBase;
@@ -52,9 +53,11 @@ public class PDType0Font extends PDFont implements PDVectorFont
     private boolean isCMapPredefined;
     private boolean isDescendantCJK;
     private PDCIDFontType2Embedder embedder;
-    private final Set<Integer> noUnicode = new HashSet<Integer>(); 
+    private final Set<Integer> noUnicode = new HashSet<Integer>();
     private TrueTypeFont ttf;
-    
+    private final GsubData gsubData;
+    private final CmapLookup cmapLookup;
+
     /**
      * Loads a TTF to be embedded and subset into a document as a Type 0 font. If you are loading a
      * font for AcroForm, then use the 3-parameter constructor instead.
@@ -170,22 +173,24 @@ public class PDType0Font extends PDFont implements PDVectorFont
     {
         return new PDType0Font(doc, ttf, embedSubset, false, true);
     }
-    
+
     /**
      * Constructor for reading a Type0 font from a PDF file.
-     * 
+     *
      * @param fontDictionary The font dictionary according to the PDF specification.
      * @throws IOException if the descendant font is missing.
      */
     public PDType0Font(COSDictionary fontDictionary) throws IOException
     {
         super(fontDictionary);
-        COSBase base = dict.getDictionaryObject(COSName.DESCENDANT_FONTS);
-        if (!(base instanceof COSArray))
+
+        gsubData = GsubData.NO_DATA_FOUND;
+        cmapLookup = null;
+        COSArray descendantFonts = dict.getCOSArray(COSName.DESCENDANT_FONTS);
+        if (descendantFonts == null)
         {
             throw new IOException("Missing descendant font array");
         }
-        COSArray descendantFonts = (COSArray) base;
         if (descendantFonts.size() == 0)
         {
             throw new IOException("Descendant font array is empty");
@@ -218,12 +223,14 @@ public class PDType0Font extends PDFont implements PDVectorFont
      * @throws IOException
      */
     private PDType0Font(PDDocument document, TrueTypeFont ttf, boolean embedSubset,
-            boolean closeTTF, boolean vertical) throws IOException
+                        boolean closeTTF, boolean vertical) throws IOException
     {
         if (vertical)
         {
             ttf.enableVerticalSubstitutions();
         }
+        this.gsubData = ttf.getGsubData();
+        this.cmapLookup = ttf.getUnicodeCmapLookup();
         embedder = new PDCIDFontType2Embedder(document, dict, ttf, embedSubset, this, vertical);
         descendantFont = embedder.getCIDFont();
         readEncoding();
@@ -252,7 +259,15 @@ public class PDType0Font extends PDFont implements PDVectorFont
         }
         embedder.addToSubset(codePoint);
     }
-    
+
+    public void addGlyphsToSubset(Set<Integer> glyphIds) {
+        if (!this.willBeSubset()) {
+            throw new IllegalStateException("This font was created with subsetting disabled");
+        } else {
+            this.embedder.addGlyphIds(glyphIds);
+        }
+    }
+
     @Override
     public void subset() throws IOException
     {
@@ -267,7 +282,7 @@ public class PDType0Font extends PDFont implements PDVectorFont
             ttf = null;
         }
     }
-    
+
     @Override
     public boolean willBeSubset()
     {
@@ -299,17 +314,17 @@ public class PDType0Font extends PDFont implements PDVectorFont
                 LOG.warn("Invalid Encoding CMap in font " + getName());
             }
         }
-        
+
         // check if the descendant font is CJK
         PDCIDSystemInfo ros = descendantFont.getCIDSystemInfo();
         if (ros != null)
         {
             String ordering = ros.getOrdering();
             isDescendantCJK = "Adobe".equals(ros.getRegistry()) &&
-                    ("GB1".equals(ordering) || 
-                     "CNS1".equals(ordering) ||
-                     "Japan1".equals(ordering) ||
-                     "Korea1".equals(ordering));
+                    ("GB1".equals(ordering) ||
+                            "CNS1".equals(ordering) ||
+                            "Japan1".equals(ordering) ||
+                            "Korea1".equals(ordering));
         }
     }
 
@@ -323,7 +338,7 @@ public class PDType0Font extends PDFont implements PDVectorFont
         // Adobe-Korea1 character collection:
         COSName name = dict.getCOSName(COSName.ENCODING);
         if (isCMapPredefined && !(name == COSName.IDENTITY_H || name == COSName.IDENTITY_V) ||
-            isDescendantCJK)
+                isDescendantCJK)
         {
             // a) Map the character code to a CID using the font's CMap
             // b) Obtain the ROS from the font's CIDSystemInfo
@@ -339,15 +354,15 @@ public class PDType0Font extends PDFont implements PDVectorFont
                 if (cidSystemInfo != null)
                 {
                     strName = cidSystemInfo.getRegistry() + "-" +
-                              cidSystemInfo.getOrdering() + "-" +
-                              cidSystemInfo.getSupplement();
+                            cidSystemInfo.getOrdering() + "-" +
+                            cidSystemInfo.getSupplement();
                 }
             }
             else if (name != null)
             {
                 strName = name.getName();
             }
-            
+
             // try to find the corresponding Unicode (UC2) CMap
             if (strName != null)
             {
@@ -631,5 +646,16 @@ public class PDType0Font extends PDFont implements PDVectorFont
     public boolean hasGlyph(int code) throws IOException
     {
         return descendantFont.hasGlyph(code);
+    }
+
+    public GsubData getGsubData() {
+        return this.gsubData;
+    }
+
+    public byte[] encodeGlyphId(int glyphId) {
+        return this.descendantFont.encodeGlyphId(glyphId);
+    }
+    public CmapLookup getCmapLookup() {
+        return this.cmapLookup;
     }
 }

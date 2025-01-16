@@ -24,17 +24,17 @@ import java.io.InputStream;
 
 /**
  * An interface into a data stream.
- * 
+ *
  * @author Ben Litchfield
- * 
+ *
  */
-class MemoryTTFDataStream extends TTFDataStream 
+class MemoryTTFDataStream extends TTFDataStream
 {
-    private byte[] data = null;
+    private final byte[] data;
     private int currentPosition = 0;
-    
+
     /**
-     * Constructor from a stream. 
+     * Constructor from a stream.
      * @param is The stream to read from. It will be closed by this method.
      * @throws IOException If an error occurs while reading from the stream.
      */
@@ -56,7 +56,7 @@ class MemoryTTFDataStream extends TTFDataStream
             is.close();
         }
     }
-    
+
     /**
      * Read an unsigned byte.
      * @return An unsigned byte.
@@ -67,10 +67,10 @@ class MemoryTTFDataStream extends TTFDataStream
     {
         return ((long)(readSignedInt()) << 32) + (readSignedInt() & 0xFFFFFFFFL);
     }
-    
+
     /**
      * Read a signed integer.
-     * 
+     *
      * @return A signed integer.
      * @throws IOException If there is a problem reading the file.
      */
@@ -86,7 +86,7 @@ class MemoryTTFDataStream extends TTFDataStream
         }
         return ((ch1 << 24) + (ch2 << 16) + (ch3 << 8) + ch4);
     }
-    
+
     /**
      * Read an unsigned byte.
      * @return An unsigned byte.
@@ -103,10 +103,10 @@ class MemoryTTFDataStream extends TTFDataStream
         currentPosition++;
         return (retval+256)%256;
     }
-    
+
     /**
      * Read an unsigned short.
-     * 
+     *
      * @return An unsigned short.
      * @throws IOException If there is an error reading the data.
      */
@@ -121,10 +121,10 @@ class MemoryTTFDataStream extends TTFDataStream
         }
         return (ch1 << 8) + ch2;
     }
-    
+
     /**
      * Read an signed short.
-     * 
+     *
      * @return An signed short.
      * @throws IOException If there is an error reading the data.
      */
@@ -139,17 +139,17 @@ class MemoryTTFDataStream extends TTFDataStream
         }
         return (short)((ch1 << 8) + ch2);
     }
-    
+
     /**
      * Close the underlying resources.
-     * 
+     *
      * @throws IOException If there is an error closing the resources.
      */
     @Override
     public void close() throws IOException
     {
     }
-    
+
     /**
      * Seek into the datasource.
      *
@@ -165,24 +165,21 @@ class MemoryTTFDataStream extends TTFDataStream
         }
         currentPosition = (int) pos;
     }
-    
+
     /**
      * @see java.io.InputStream#read( byte[], int, int )
-     * 
+     *
      * @param b The buffer to write to.
      * @param off The offset into the buffer.
      * @param len The length into the buffer.
-     * 
+     *
      * @return The number of bytes read, or -1 at the end of the stream
-     * 
+     *
      * @throws IOException If there is an error reading from the stream.
      */
     @Override
-    public int read(byte[] b,
-            int off,
-            int len)
-     throws IOException
-     {
+    public int read(byte[] b, int off, int len) throws IOException
+    {
         if (currentPosition < data.length)
         {
             int amountRead = Math.min( len, data.length-currentPosition );
@@ -194,8 +191,8 @@ class MemoryTTFDataStream extends TTFDataStream
         {
             return -1;
         }
-     }
-    
+    }
+
     /**
      * Get the current position in the stream.
      * @return The current position in the stream.
@@ -206,7 +203,7 @@ class MemoryTTFDataStream extends TTFDataStream
     {
         return currentPosition;
     }
-    
+
     /**
      * {@inheritDoc}
      */
