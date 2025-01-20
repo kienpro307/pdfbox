@@ -22,6 +22,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
 import java.util.*;
 
@@ -270,10 +271,10 @@ abstract class PDAbstractContentStream implements Closeable
         byte[] encodedText = null;
 
         if (font instanceof PDType0Font) {
-            GsubWorker gsubWorker = (GsubWorker)this.gsubWorkers.get(font);
+            GsubWorker gsubWorker = this.gsubWorkers.get(font);
             if (gsubWorker != null) {
                 PDType0Font pdType0Font = (PDType0Font)font;
-                Set<Integer> glyphIds = new HashSet();
+                Set<Integer> glyphIds = new HashSet<Integer>();
                 encodedText = this.encodeForGsub(gsubWorker, glyphIds, pdType0Font, text);
                 if (pdType0Font.willBeSubset()) {
                     pdType0Font.addGlyphsToSubset(glyphIds);
@@ -484,20 +485,20 @@ abstract class PDAbstractContentStream implements Closeable
         sb.append(inlineImage.getHeight());
 
         sb.append("\n /CS ");
-        sb.append("/");
+        sb.append('/');
         sb.append(inlineImage.getColorSpace().getName());
 
         COSArray decodeArray = inlineImage.getDecode();
         if (decodeArray != null && decodeArray.size() > 0)
         {
             sb.append("\n /D ");
-            sb.append("[");
+            sb.append('[');
             for (COSBase base : decodeArray)
             {
                 sb.append(((COSNumber) base).intValue());
-                sb.append(" ");
+                sb.append(' ');
             }
-            sb.append("]");
+            sb.append(']');
         }
 
         if (inlineImage.isStencil())
@@ -702,28 +703,6 @@ abstract class PDAbstractContentStream implements Closeable
     }
 
     /**
-     * Set the stroking color in the DeviceRGB color space. Range is 0..255.
-     *
-     * @param r The red value
-     * @param g The green value.
-     * @param b The blue value.
-     * @throws IOException If an IO error occurs while writing to the stream.
-     * @throws IllegalArgumentException If the parameters are invalid.
-     * @deprecated use
-     * {@link #setStrokingColor(float, float, float) setStrokingColor(r/255f, g/255f, b/255f)}
-     */
-    @Deprecated
-    public void setStrokingColor(int r, int g, int b) throws IOException
-    {
-        if (isOutside255Interval(r) || isOutside255Interval(g) || isOutside255Interval(b))
-        {
-            throw new IllegalArgumentException("Parameters must be within 0..255, but are "
-                    + String.format("(%d,%d,%d)", r, g, b));
-        }
-        setStrokingColor(r / 255f, g / 255f, b / 255f);
-    }
-
-    /**
      * Set the stroking color in the DeviceCMYK color space. Range is 0..1
      *
      * @param c The cyan value.
@@ -843,50 +822,6 @@ abstract class PDAbstractContentStream implements Closeable
     }
 
     /**
-     * Set the non stroking color in the DeviceRGB color space. Range is 0..255.
-     *
-     * @param r The red value
-     * @param g The green value.
-     * @param b The blue value.
-     * @throws IOException If an IO error occurs while writing to the stream.
-     * @throws IllegalArgumentException If the parameters are invalid.
-     * @deprecated use
-     * {@link #setNonStrokingColor(float, float, float) setNonStrokingColor(r/255f, g/255f, b/255f)}
-     */
-    @Deprecated
-    public void setNonStrokingColor(int r, int g, int b) throws IOException
-    {
-        if (isOutside255Interval(r) || isOutside255Interval(g) || isOutside255Interval(b))
-        {
-            throw new IllegalArgumentException("Parameters must be within 0..255, but are "
-                    + String.format("(%d,%d,%d)", r, g, b));
-        }
-        setNonStrokingColor(r / 255f, g / 255f, b / 255f);
-    }
-
-    /**
-     * Set the non-stroking color in the DeviceCMYK color space. Range is 0..255.
-     *
-     * @param c The cyan value.
-     * @param m The magenta value.
-     * @param y The yellow value.
-     * @param k The black value.
-     * @throws IOException If an IO error occurs while writing to the stream.
-     * @throws IllegalArgumentException If the parameters are invalid.
-     * @deprecated Use {@link #setStrokingColor(float, float, float, float) setStrokingColor(c/255f, m/255f, y/255f, k/255f)} instead.
-     */
-    @Deprecated
-    public void setNonStrokingColor(int c, int m, int y, int k) throws IOException
-    {
-        if (isOutside255Interval(c) || isOutside255Interval(m) || isOutside255Interval(y) || isOutside255Interval(k))
-        {
-            throw new IllegalArgumentException("Parameters must be within 0..255, but are "
-                    + String.format("(%d,%d,%d,%d)", c, m, y, k));
-        }
-        setNonStrokingColor(c / 255f, m / 255f, y / 255f, k / 255f);
-    }
-
-    /**
      * Set the non-stroking color in the DeviceCMYK color space. Range is 0..1.
      *
      * @param c The cyan value.
@@ -910,22 +845,7 @@ abstract class PDAbstractContentStream implements Closeable
         setNonStrokingColorSpaceStack(PDDeviceCMYK.INSTANCE);
     }
 
-    /**
-     * Set the non-stroking color in the DeviceGray color space. Range is 0..255.
-     *
-     * @param g The gray value.
-     * @throws IOException If an IO error occurs while writing to the stream.
-     * @throws IllegalArgumentException If the parameter is invalid.
-     * @deprecated use {@link #setNonStrokingColor(float) setNonStrokingColor(g/255f)}
-     */
-    public void setNonStrokingColor(int g) throws IOException
-    {
-        if (isOutside255Interval(g))
-        {
-            throw new IllegalArgumentException("Parameter must be within 0..255, but is " + g);
-        }
-        setNonStrokingColor(g / 255f);
-    }
+
 
     /**
      * Set the non-stroking color in the DeviceGray color space. Range is 0..1.
@@ -1491,8 +1411,8 @@ abstract class PDAbstractContentStream implements Closeable
      */
     protected void writeOperator(String text) throws IOException
     {
-        outputStream.write(text.getBytes(Charsets.US_ASCII));
-        outputStream.write('\n');
+        write(text);
+        writeLine();
     }
 
     /**
@@ -1502,7 +1422,7 @@ abstract class PDAbstractContentStream implements Closeable
      */
     protected void write(String text) throws IOException
     {
-        outputStream.write(text.getBytes(Charsets.US_ASCII));
+        writeBytes(text.getBytes(StandardCharsets.US_ASCII));
     }
 
     /**
