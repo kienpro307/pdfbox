@@ -179,6 +179,8 @@ public final class PDPageContentStream extends PDAbstractContentStream implement
                     prefixOut.write('\n');
                 } catch (IOException e) {
                     throw new RuntimeException(e);
+                } finally {
+                    prefixOut.close();
                 }
 
                 // insert the new stream at the beginning

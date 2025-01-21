@@ -218,6 +218,12 @@ public class COSStream extends COSDictionary implements Closeable
         {
             setItem(COSName.FILTER, filters);
         }
+//        if (randomAccess != null) {
+//            randomAccess.clear();
+//        } else {
+//            IOUtils.closeQuietly(randomAccess);
+//            randomAccess = scratchFile.createBuffer();
+//        }
         IOUtils.closeQuietly(randomAccess);
         randomAccess = scratchFile.createBuffer();
         OutputStream randomOut = new RandomAccessOutputStream(randomAccess);
@@ -269,6 +275,12 @@ public class COSStream extends COSDictionary implements Closeable
         {
             throw new IllegalStateException("Cannot have more than one open stream writer.");
         }
+//        if (randomAccess != null) {
+//            randomAccess.clear();
+//        } else {
+//            IOUtils.closeQuietly(randomAccess);
+//            randomAccess = scratchFile.createBuffer();
+//        }
         IOUtils.closeQuietly(randomAccess);
         randomAccess = scratchFile.createBuffer();
         OutputStream out = new RandomAccessOutputStream(randomAccess);
@@ -358,56 +370,24 @@ public class COSStream extends COSDictionary implements Closeable
     }
     
     /**
-     * Sets the filters to be applied when encoding or decoding the stream.
-     *
-     * @param filters The filters to set on this stream.
-     * @throws IOException If there is an error clearing the old filters.
-     * @deprecated Use {@link #createOutputStream(COSBase)} instead.
-     */
-    @Deprecated
-    public void setFilters(COSBase filters) throws IOException
-    {
-        setItem(COSName.FILTER, filters);
-    }
-
-    /**
-     * Returns the contents of the stream as a text string.
-     *
-     * @return the string representation of this string.
-     * 
-     * @deprecated Use {@link #toTextString()} instead.
-     */
-    @Deprecated
-    public String getString()
-    {
-        return toTextString();
-    }
-    
-    /**
      * Returns the contents of the stream as a PDF "text string".
      * 
      * @return the text string representation of this stream.
      */
     public String toTextString()
     {
-        InputStream input = null;
-        byte[] array;
         try
         {
-            input = createInputStream();
-            array = IOUtils.toByteArray(input);
+            InputStream input = createInputStream();
+            byte[] array = IOUtils.toByteArray(input);
+            COSString string = new COSString(array);
+            return string.getString();
         }
         catch (IOException e)
         {
             LOG.debug("An exception occurred trying to get the content - returning empty string instead", e);
             return "";
         }
-        finally
-        {
-            IOUtils.closeQuietly(input);
-        }
-        COSString string = new COSString(array);
-        return string.getString();
     }
     
     @Override
@@ -431,6 +411,8 @@ public class COSStream extends COSDictionary implements Closeable
         if (randomAccess != null)
         {
             randomAccess.close();
+            randomAccess = null;
         }
+
     }
 }
